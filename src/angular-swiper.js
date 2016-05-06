@@ -32,6 +32,7 @@
                 slidesPerColumn: '=',
                 spaceBetween: '=',
                 parallax: '=',
+                speed: '=',
                 parallaxTransition: '@',
                 paginationIsActive: '=',
                 paginationClickable: '=',
@@ -46,7 +47,8 @@
                 slideCls: '@',
                 direction: '@',
                 swiper: '=',
-                overrideParameters: '='
+                overrideParameters: '=',
+                currentSlide: '='
             },
             controller: function($scope, $element, $timeout) {
                 var uuid = createUUID();
@@ -67,6 +69,12 @@
                 if (!angular.isUndefined($scope.autoplay) && typeof $scope.autoplay === 'number') {
                     params = angular.extend({}, params, {
                         autoplay: $scope.autoplay
+                    });
+                }
+
+                if (!angular.isUndefined($scope.speed) && typeof $scope.speed === 'number') {
+                    params = angular.extend({}, params, {
+                        speed: $scope.speed
                     });
                 }
 
@@ -99,6 +107,43 @@
                     } else {
                         swiper = new Swiper($element[0].firstChild, params);
                     }
+
+                    if (!angular.isUndefined($scope.currentSlide)){
+                      swiper.on('slideChangeEnd', function(){
+                        $timeout (function(){
+                          $scope.internalSlide = true;
+                          if (swiper.params.loop){
+                            var currentSlideElement = $element[0].querySelector('.swiper-slide-active');
+                            var currentSlideIndexString = currentSlideElement.attributes['data-swiper-slide-index'].value;
+                            $scope.currentSlide = parseInt(currentSlideIndexString, 10);
+                          } else {
+                            $scope.currentSlide = Math.abs(swiper.activeIndex);
+                          }
+                        });
+                      });
+                    }
+
+                    $scope.$watch('currentSlide', function(newValue, oldValue){
+                      if ($scope.internalSlide){
+                        $scope.internalSlide = false;
+                        return;
+                      }
+                      if ((!angular.isUndefined(newValue)) && (newValue != oldValue)){
+                        if (swiper.params.loop){
+                          var possibleDestinationIndexes = [];
+                          for (var index = 0; index < swiper.slides.length; index++){
+                            var slide = swiper.slides[index];
+                            var dataIndex = parseInt(slide.attributes['data-swiper-slide-index'].value, 10);
+                            if(dataIndex === newValue){
+                              swiper.slideTo(index);
+                              break;
+                            }
+                          }
+                        } else {
+                          swiper.slideTo(newValue);
+                        }
+                      }
+                    });
 
                     //If specified, calls this function when the swiper object is available
                     if (!angular.isUndefined($scope.onReady)) {
