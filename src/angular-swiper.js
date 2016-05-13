@@ -124,10 +124,7 @@
                     }
 
                     $scope.$watch('currentSlide', function(newValue, oldValue){
-                      if ($scope.internalSlide){
-                        $scope.internalSlide = false;
-                        return;
-                      }
+
                       if ((!angular.isUndefined(newValue)) && (newValue != oldValue)){
                         if (swiper.params.loop){
                           var possibleDestinationIndexes = [];
